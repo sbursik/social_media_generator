@@ -92,7 +92,8 @@ uv run tools/captions.py \
 5. Pick a background music track from `audio_samples/` (ask the user if unsure; can render one version per track to compare)
 6. Retime clips with `tools/sync_scenes.py` so visuals match narration, then assemble `synced/` clips into final.mp4 with `--music`
 7. Burn captions with `tools/captions.py` → final_captioned.mp4
-8. Report the output path
+8. Write `POST.txt` with captions, Shorts title/description, hashtags, and posting checklist (incl. AI-content label)
+9. Report the output path
 
 ## Project Structure
 
@@ -106,7 +107,8 @@ projects/<slug>/
 ├── voiceover.wav       # Full narration
 ├── narration.txt       # Narration text (for captions)
 ├── final.mp4           # Finished video
-└── final_captioned.mp4 # With burned-in captions
+├── final_captioned.mp4 # With burned-in captions
+└── POST.txt            # Captions, titles, hashtags, posting checklist
 ```
 
 ## Platform Specs

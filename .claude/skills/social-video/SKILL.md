@@ -139,10 +139,21 @@ uv run tools/captions.py \
 
 Options: `--words 3` (words per line), `--font-size 86`, `--position 0.30` (fraction from bottom), `--highlight FFD60A`.
 
-### Step 8 — Report
+### Step 8 — Social post copy
+
+Write `projects/<slug>/POST.txt` with ready-to-paste posting text (format: `templates/POST.example.txt`):
+
+- **TikTok / Reels caption** — hook line (usually the video's first line), 1–2 sentence teaser, a question to drive comments, then 6–8 hashtags incl. the channel tag
+- **YouTube Shorts** — title ≤100 chars ending in `#shorts`, short description with a follow CTA, comma-separated tags
+- **Hashtag bank** — ~14 topic hashtags to rotate (3–6 per post)
+- **Posting checklist** — turn ON the platform's AI-generated content label (TikTok "AI-generated content", YouTube "Altered or synthetic content", Instagram "AI info"); suggested cover frame with timestamp; pinned-comment idea
+
+Keep claims consistent with the narration — no statistics the video doesn't make.
+
+### Step 9 — Report
 
 Tell the user:
-- Output path: `projects/<slug>/final_captioned.mp4` (and uncaptioned `final.mp4`)
+- Output path: `projects/<slug>/final_captioned.mp4` (and uncaptioned `final.mp4`), plus `POST.txt`
 - Total duration
 - Any scenes that may need a re-run
 
