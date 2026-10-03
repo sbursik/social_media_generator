@@ -1,0 +1,16 @@
+# Secrets
+key.txt
+github.txt
+.env
+
+# Local environment / caches
+.venv/
+.cache/
+__pycache__/
+
+# Large model files (downloaded via setup in CLAUDE.md)
+*.onnx
+voices-v1.0.bin
+
+# Generated output
+projects/
