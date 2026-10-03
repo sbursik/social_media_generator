@@ -13,9 +13,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from comfyui_client import load_workflow, run_workflow
+from comfyui_client import WORKFLOWS_DIR, load_workflow, run_workflow
 
-WORKFLOW_PATH = Path(__file__).parent.parent.parent / "ComfyUI" / "api_workflows" / "api_google_nano_banana2_text_to_image.json"
+WORKFLOW_PATH = WORKFLOWS_DIR / "api_google_nano_banana2_text_to_image.json"
 
 # Aspect ratio → model.aspect_ratio value used by GeminiNanoBanana2V2
 ASPECT_MAP = {

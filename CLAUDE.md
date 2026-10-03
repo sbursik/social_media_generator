@@ -1,4 +1,4 @@
-# Social Media Video Toolkit
+# Social Media Video Generator
 
 Local AI video production using ComfyUI. Creates short-form social media videos (TikTok, Reels, Shorts) from a concept.
 
@@ -15,16 +15,17 @@ Local AI video production using ComfyUI. Creates short-form social media videos 
 
 ## Requirements
 
-- ComfyUI running at `http://127.0.0.1:8188`
-- `uv sync` run from `~/video-toolkit/` to install Python deps
-- Kokoro model files in `~/video-toolkit/` (see Setup below)
+- ComfyUI running at `http://127.0.0.1:8188` (or set `COMFYUI_URL` in `.env`)
+- Comfy.org API key with credits in `.env` as `COMFY_API_KEY` (Gemini + MiniMax are paid API nodes)
+- `uv sync` run from the repo root to install Python deps
+- Kokoro model files in the repo root (see Setup below)
 - FFmpeg installed (already present)
 
 ## Setup (first time only)
 
 ```bash
-cd ~/video-toolkit
 uv sync
+cp .env.example .env   # then fill in COMFY_API_KEY
 
 # Download Kokoro ONNX model files
 uv run python -c "
@@ -36,7 +37,7 @@ hf_hub_download('fastrtc/kokoro-onnx', 'voices-v1.0.bin', local_dir='.')
 
 ## Tool Usage
 
-All tools run from `~/video-toolkit/` with `uv run`:
+All tools run from the repo root with `uv run`:
 
 ```bash
 # Generate a scene image (9:16 for vertical video)
@@ -142,7 +143,8 @@ Music loops if shorter than the video, fades in over 1s and out over the last 2.
 
 ## Notes
 
-- Always run tools from `~/video-toolkit/` (not subdirectories)
+- Always run tools from the repo root (not subdirectories)
+- ComfyUI workflows used by the tools live in `workflows/`; files move to/from ComfyUI over HTTP, so any install location works
 - ComfyUI must be running before calling image/video tools
 - MiniMax video generation can take 2–5 minutes per clip
 - Assembly trims to the audio length — pad the voiceover with silence (`ffmpeg -af "adelay=1000:all=1,apad=whole_dur=<video length>"`) so the last clip isn't cut

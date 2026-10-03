@@ -13,9 +13,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from comfyui_client import load_workflow, run_workflow, copy_image_to_input
+from comfyui_client import WORKFLOWS_DIR, load_workflow, run_workflow, copy_image_to_input
 
-WORKFLOW_PATH = Path(__file__).parent.parent.parent / "ComfyUI" / "api_workflows" / "api_minimax_h3_max_r2v.json"
+WORKFLOW_PATH = WORKFLOWS_DIR / "api_minimax_h3_max_r2v.json"
 
 
 def build_workflow(
