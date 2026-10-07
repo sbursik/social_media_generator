@@ -1,4 +1,6 @@
-"""Generate an image via ComfyUI using the Gemini Nano Banana 2 workflow.
+"""Generate an image with Gemini Nano Banana 2 — via ComfyUI, or the Gemini API directly.
+
+Set BACKEND=direct in .env (or pass --backend direct) to skip ComfyUI; see tools/direct_api.py.
 
 Usage:
     uv run tools/comfyui_image.py --prompt "..." --output out.png
@@ -7,6 +9,7 @@ Usage:
 
 import argparse
 import copy
+import os
 import random
 import shutil
 import sys
@@ -50,9 +53,18 @@ def main():
     parser.add_argument("--resolution", default="1K", choices=["1K", "2K"], help="Output resolution")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
     parser.add_argument("--output", required=True, help="Output image path (e.g. scene1.png)")
+    parser.add_argument("--backend", choices=["comfyui", "direct"], default=os.environ.get("BACKEND", "comfyui"),
+                        help="comfyui (default) or direct Gemini API (env: BACKEND)")
     args = parser.parse_args()
 
     print(f"Generating image: {args.prompt[:60]}...")
+    if args.backend == "direct":
+        from direct_api import gemini_image
+        seed = args.seed if args.seed is not None else random.randint(0, 2**31 - 1)
+        gemini_image(args.prompt, ASPECT_MAP[args.aspect], args.resolution, seed, Path(args.output))
+        print(f"Saved: {args.output}")
+        return
+
     workflow = build_workflow(args.prompt, args.aspect, args.resolution, args.seed)
     output_files = run_workflow(workflow, timeout=120)
 

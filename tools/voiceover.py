@@ -117,7 +117,7 @@ def main():
         parser.error("--output is required")
 
     if args.file:
-        text = Path(args.file).read_text().strip()
+        text = Path(args.file).read_text(encoding="utf-8").strip()
     else:
         text = args.text
 

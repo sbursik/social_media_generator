@@ -5,7 +5,7 @@ description: "Create short-form social media videos (TikTok, Reels, YouTube Shor
 
 # Social Video Skill
 
-Create a complete social media video from a concept: scenes are written, images generated via ComfyUI (Gemini Nano Banana 2), animated via ComfyUI (MiniMax H3 Max), narrated with Kokoro TTS, and assembled with FFmpeg.
+Create a complete social media video from a concept: scenes are written, images generated via ComfyUI (Gemini Nano Banana 2), animated via ComfyUI (MiniMax H3 Max) — or both via the direct APIs when `.env` has `BACKEND=direct` (no ComfyUI, e.g. on Windows) — narrated with Kokoro TTS, and assembled with FFmpeg.
 
 ## How to invoke
 
@@ -164,6 +164,7 @@ Tell the user:
 
 - If a ComfyUI node says "Please login first": `COMFY_API_KEY` is missing — add it to `.env` in the repo root (see README)
 
+- With `BACKEND=direct`: a missing `GEMINI_API_KEY` / `MINIMAX_API_KEY` stops the tool with a clear error; only 768P video is available (`--upscale` for 2K)
 - If ComfyUI can't be reached: check it's running at `COMFYUI_URL` (default http://127.0.0.1:8188)
 - If Kokoro fails with model not found: run the setup commands in CLAUDE.md
 - If a video clip looks wrong: re-run just that scene's comfyui_video.py with a different seed or refined motion prompt

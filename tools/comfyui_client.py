@@ -27,7 +27,7 @@ COMFYUI_URL = os.environ.get("COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
 
 
 def load_workflow(path: str | Path) -> dict:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 

@@ -1,4 +1,6 @@
-"""Animate an image via ComfyUI using the MiniMax H3 Max workflow.
+"""Animate an image with MiniMax H3 Max — via ComfyUI, or the MiniMax API directly.
+
+Set BACKEND=direct in .env (or pass --backend direct) to skip ComfyUI; see tools/direct_api.py.
 
 Usage:
     uv run tools/comfyui_video.py --image scene1.png --prompt "..." --output scene1.mp4
@@ -7,6 +9,7 @@ Usage:
 
 import argparse
 import copy
+import os
 import random
 import shutil
 import sys
@@ -69,6 +72,8 @@ def main():
     parser.add_argument("--enhance", action="store_true", help="Use MiniMax prompt enhancer")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--output", required=True, help="Output video path (e.g. scene1.mp4)")
+    parser.add_argument("--backend", choices=["comfyui", "direct"], default=os.environ.get("BACKEND", "comfyui"),
+                        help="comfyui (default) or direct MiniMax API (env: BACKEND)")
     args = parser.parse_args()
 
     image_path = Path(args.image).resolve()
@@ -77,6 +82,15 @@ def main():
         sys.exit(1)
 
     print(f"Animating {image_path.name}: {args.prompt[:60]}...")
+    if args.backend == "direct":
+        if args.resolution != "768P":
+            parser.error("MiniMax H3 Max via the direct API supports 768P only (use --upscale for 2K)")
+        from direct_api import minimax_video
+        minimax_video(image_path, args.prompt, args.duration, args.resolution, args.ratio,
+                      args.upscale, args.enhance, Path(args.output))
+        print(f"Saved: {args.output}")
+        return
+
     workflow = build_workflow(
         image_path,
         args.prompt,

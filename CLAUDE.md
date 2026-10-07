@@ -1,13 +1,13 @@
 # Social Media Video Generator
 
-Local AI video production using ComfyUI. Creates short-form social media videos (TikTok, Reels, Shorts) from a concept.
+Local AI video production using ComfyUI (or the Gemini/MiniMax APIs directly — no ComfyUI needed, works on Windows). Creates short-form social media videos (TikTok, Reels, Shorts) from a concept.
 
 ## Stack
 
 | Task | Tool | Backend |
 |---|---|---|
-| Text → Image | `tools/comfyui_image.py` | Gemini Nano Banana 2 via ComfyUI |
-| Image → Video | `tools/comfyui_video.py` | MiniMax H3 Max via ComfyUI |
+| Text → Image | `tools/comfyui_image.py` | Gemini Nano Banana 2 via ComfyUI or direct API |
+| Image → Video | `tools/comfyui_video.py` | MiniMax H3 Max via ComfyUI or direct API |
 | Voiceover | `tools/voiceover.py` | Kokoro ONNX (local CPU) |
 | Assembly | `tools/assemble.py` | FFmpeg |
 | Scene sync | `tools/sync_scenes.py` | faster-whisper + FFmpeg |
@@ -15,11 +15,12 @@ Local AI video production using ComfyUI. Creates short-form social media videos 
 
 ## Requirements
 
-- ComfyUI running at `http://127.0.0.1:8188` (or set `COMFYUI_URL` in `.env`)
-- Comfy.org API key with credits in `.env` as `COMFY_API_KEY` (Gemini + MiniMax are paid API nodes)
+- One image/video backend, chosen by `BACKEND` in `.env`:
+  - `comfyui` (default): ComfyUI running at `http://127.0.0.1:8188` (or set `COMFYUI_URL`) plus a Comfy.org API key with credits as `COMFY_API_KEY`
+  - `direct`: no ComfyUI; `GEMINI_API_KEY` (Google AI Studio) and `MINIMAX_API_KEY` (MiniMax platform), billed by those accounts. Video is 768P only (`--upscale` for 2K). Override per run with `--backend`
 - `uv sync` run from the repo root to install Python deps
 - Kokoro model files in the repo root (see Setup below)
-- FFmpeg installed (already present)
+- FFmpeg installed (already present on Linux; on Windows: `winget install ffmpeg`)
 
 ## Setup (first time only)
 
@@ -34,6 +35,10 @@ hf_hub_download('fastrtc/kokoro-onnx', 'kokoro-v1.0.onnx', local_dir='.')
 hf_hub_download('fastrtc/kokoro-onnx', 'voices-v1.0.bin', local_dir='.')
 "
 ```
+
+### Windows
+
+Same steps in PowerShell, after installing uv (`winget install astral-sh.uv`) and FFmpeg (`winget install ffmpeg`, then open a new terminal). Use `copy .env.example .env` and set `BACKEND=direct`. The multi-line commands below use bash `\` line breaks — in PowerShell, put them on one line or end lines with a backtick (`` ` ``) instead.
 
 ## Tool Usage
 
@@ -148,7 +153,7 @@ Music loops if shorter than the video, fades in over 1s and out over the last 2.
 
 - Always run tools from the repo root (not subdirectories)
 - ComfyUI workflows used by the tools live in `workflows/`; files move to/from ComfyUI over HTTP, so any install location works
-- ComfyUI must be running before calling image/video tools
+- With `BACKEND=comfyui`, ComfyUI must be running before calling image/video tools
 - MiniMax video generation can take 2–5 minutes per clip
 - Assembly trims to the audio length — pad the voiceover with silence (`ffmpeg -af "adelay=1000:all=1,apad=whole_dur=<video length>"`) so the last clip isn't cut
 - Kokoro generates ~150 words/minute at speed=1.0

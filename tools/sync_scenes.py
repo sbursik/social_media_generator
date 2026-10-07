@@ -37,7 +37,7 @@ def clip_info(path: Path) -> tuple[float, int, int]:
 
 def scene_starts(script_md: Path, audio: Path, model: str) -> list[tuple[float, float]]:
     """(first word start, last word end) for each scene's narration."""
-    lines = re.findall(r"\*\*Narration:\*\* (.*)", script_md.read_text())
+    lines = re.findall(r"\*\*Narration:\*\* (.*)", script_md.read_text(encoding="utf-8"))
     words = align_to_script(transcribe_words(audio, model), " ".join(lines))
     spans, i = [], 0
     for line in lines:

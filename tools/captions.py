@@ -26,6 +26,11 @@ FONTS_DIR = Path(__file__).parent.parent / "fonts"
 FONT_NAME = "Montserrat ExtraBold"
 
 
+def filter_path(path: Path) -> str:
+    """Quote a path for an ffmpeg filter option; Windows drive colons (C:) must be escaped."""
+    return "'" + path.resolve().as_posix().replace(":", "\\:") + "'"
+
+
 def transcribe_words(audio: Path, model_size: str) -> list[dict]:
     from faster_whisper import WhisperModel
 
@@ -169,7 +174,7 @@ def main():
     words = transcribe_words(audio, args.model)
     if not words:
         sys.exit("ERROR: no speech detected in audio")
-    script = args.text or (Path(args.file).read_text() if args.file else None)
+    script = args.text or (Path(args.file).read_text(encoding="utf-8") if args.file else None)
     if script:
         words = align_to_script(words, script)
     # Whisper stretches a word over leading silence (e.g. the 1s pad, so the first
@@ -182,13 +187,13 @@ def main():
     ass_path = output.with_suffix(".ass")
     ass_path.write_text(build_ass(chunks, width, height, int(args.font_size * scale),
                                   int(height * args.position), args.highlight,
-                                  args.title, args.title_duration))
+                                  args.title, args.title_duration), encoding="utf-8")
     print(f"  {len(words)} words → {len(chunks)} caption lines ({ass_path.name})")
 
     print(f"Burning captions → {output.name}")
     result = subprocess.run(
         ["ffmpeg", "-y", "-i", str(video),
-         "-vf", f"ass={ass_path}:fontsdir={FONTS_DIR}",
+         "-vf", f"ass={filter_path(ass_path)}:fontsdir={filter_path(FONTS_DIR)}",
          "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
          "-c:a", "copy", str(output)],
         capture_output=True, text=True,
