@@ -134,10 +134,13 @@ uv run tools/captions.py \
   --video projects/<slug>/final.mp4 \
   --audio projects/<slug>/voiceover_padded.wav \
   --file projects/<slug>/narration.txt \
+  --title "Ketchup Was Fish Sauce" \
   --output projects/<slug>/final_captioned.mp4
 ```
 
-Options: `--words 3` (words per line), `--font-size 86`, `--position 0.30` (fraction from bottom), `--highlight FFD60A`.
+Options: `--words 3` (words per line), `--font-size 86`, `--position 0.30` (fraction from bottom), `--highlight FFD60A`, `--title-duration 3`.
+
+Always pass `--title` with a short title (2–5 words, usually the SCRIPT.md heading). It shows in yellow in the upper third from frame 0, so it's on the cover frame, then fades out after 3s.
 
 ### Step 8 — Social post copy
 

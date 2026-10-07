@@ -11,7 +11,8 @@ Usage:
       --video projects/my-video/final.mp4 \
       --audio projects/my-video/voiceover_padded.wav \
       --file projects/my-video/narration.txt \
-      --output projects/my-video/final_captioned.mp4
+      --output projects/my-video/final_captioned.mp4 \
+      --title "Ketchup Was Fish Sauce"   # optional: title card on the opening frames
 """
 
 import argparse
@@ -30,7 +31,10 @@ def transcribe_words(audio: Path, model_size: str) -> list[dict]:
 
     print(f"Transcribing {audio.name} (whisper {model_size})...")
     model = WhisperModel(model_size, device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(str(audio), word_timestamps=True, language="en")
+    # condition_on_previous_text=False stops whisper from dropping the tail of
+    # long narrations (it once lost the final ~15 words of a 53s voiceover).
+    segments, _ = model.transcribe(str(audio), word_timestamps=True, language="en",
+                                   condition_on_previous_text=False)
     words = []
     for seg in segments:
         for w in seg.words:
@@ -93,7 +97,8 @@ def ass_time(t: float) -> str:
 
 
 def build_ass(chunks: list[list[dict]], width: int, height: int, font_size: int,
-              margin_v: int, highlight: str) -> str:
+              margin_v: int, highlight: str, title: str | None = None,
+              title_duration: float = 3.0) -> str:
     # ASS colours are &HAABBGGRR
     hl = f"&H00{highlight[4:6]}{highlight[2:4]}{highlight[0:2]}&".upper()
     header = f"""[Script Info]
@@ -106,11 +111,16 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,{FONT_NAME},{font_size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,6,3,2,80,80,{margin_v},1
+Style: Title,{FONT_NAME},{int(font_size * 1.3)},{hl},{hl},&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,8,4,8,90,90,{int(height * 0.17)},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     lines = []
+    if title:
+        # Visible from frame 0 so it's on the cover frame, then fades out
+        txt = title.upper().replace("{", "(").replace("}", ")")
+        lines.append(f"Dialogue: 1,{ass_time(0)},{ass_time(title_duration)},Title,,0,0,0,,{{\\fad(0,400)}}{txt}")
     for ci, chunk in enumerate(chunks):
         # Hold each line until the next one starts (no flicker between lines)
         chunk_end = chunks[ci + 1][0]["start"] if ci + 1 < len(chunks) else chunk[-1]["end"] + 0.6
@@ -147,6 +157,8 @@ def main():
     parser.add_argument("--position", type=float, default=0.30,
                         help="Distance from bottom as fraction of height (default: 0.30, clears TikTok UI)")
     parser.add_argument("--highlight", default="FFD60A", help="Active word colour, hex RGB (default: FFD60A yellow)")
+    parser.add_argument("--title", help="Short title shown at the top of the opening frames (cover frame)")
+    parser.add_argument("--title-duration", type=float, default=3.0, help="Seconds the title stays up (default: 3)")
     parser.add_argument("--model", default="small.en", help="faster-whisper model (default: small.en)")
     args = parser.parse_args()
 
@@ -160,11 +172,17 @@ def main():
     script = args.text or (Path(args.file).read_text() if args.file else None)
     if script:
         words = align_to_script(words, script)
+    # Whisper stretches a word over leading silence (e.g. the 1s pad, so the first
+    # caption appeared at 0.00s); no spoken word is this long, so trim its start.
+    for w in words:
+        if w["end"] - w["start"] > 1.0:
+            w["start"] = w["end"] - 0.6
 
     chunks = chunk_words(words, args.words)
     ass_path = output.with_suffix(".ass")
     ass_path.write_text(build_ass(chunks, width, height, int(args.font_size * scale),
-                                  int(height * args.position), args.highlight))
+                                  int(height * args.position), args.highlight,
+                                  args.title, args.title_duration))
     print(f"  {len(words)} words → {len(chunks)} caption lines ({ass_path.name})")
 
     print(f"Burning captions → {output.name}")
