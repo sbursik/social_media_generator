@@ -80,6 +80,7 @@ uv run tools/captions.py \
   --video projects/my-video/final.mp4 \
   --audio projects/my-video/voiceover_padded.wav \
   --file projects/my-video/narration.txt \
+  --title "Ketchup Was Fish Sauce" \
   --output projects/my-video/final_captioned.mp4
 ```
 
@@ -91,7 +92,7 @@ uv run tools/captions.py \
 4. Generate voiceover from the full narration script (pad 1s of silence at the start so the first word isn't clipped)
 5. Pick a background music track from `audio_samples/` (ask the user if unsure; can render one version per track to compare)
 6. Retime clips with `tools/sync_scenes.py` so visuals match narration, then assemble `synced/` clips into final.mp4 with `--music`
-7. Burn captions with `tools/captions.py` → final_captioned.mp4
+7. Burn captions with `tools/captions.py --title "<short title>"` → final_captioned.mp4 (the title shows on the opening frames and the cover)
 8. Write `POST.txt` with captions, Shorts title/description, hashtags, and posting checklist (incl. AI-content label)
 9. Report the output path
 
@@ -151,3 +152,4 @@ Music loops if shorter than the video, fades in over 1s and out over the last 2.
 - MiniMax video generation can take 2–5 minutes per clip
 - Assembly trims to the audio length — pad the voiceover with silence (`ffmpeg -af "adelay=1000:all=1,apad=whole_dur=<video length>"`) so the last clip isn't cut
 - Kokoro generates ~150 words/minute at speed=1.0
+- `voiceover.py` speaks years naturally (1852 → "eighteen fifty-two", 1850s → "eighteen fifties"); keep digits in the script so captions show "1852". Write quantities with commas ("1,500") so they aren't read as years

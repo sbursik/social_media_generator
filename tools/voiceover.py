@@ -12,11 +12,58 @@ Available voices (English):
     am_michael  — American male, deep
     bf_emma     — British female
     bm_george   — British male
+
+Years (1000–2099) are spoken the natural way: 1852 -> "eighteen fifty-two",
+1905 -> "nineteen oh five", 1850s -> "eighteen fifties", 2024 -> "twenty twenty-four".
+Write quantities with a comma ("1,500 people") so they aren't read as years.
 """
 
 import argparse
+import re
 import sys
 from pathlib import Path
+
+ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+        "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+        "seventeen", "eighteen", "nineteen"]
+TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+# Standalone 4-digit years 1000–2099, optionally as a decade ("1850s").
+# Comma-grouped quantities like "1,500" and prices like "$1500" are left alone.
+YEAR_RE = re.compile(r"(?<![\d$£€,.])(1\d{3}|20\d{2})(s|'s)?(?!\d|[,.]\d)")
+
+
+def two_digits(n: int) -> str:
+    if n < 20:
+        return ONES[n]
+    return TENS[n // 10] + ("-" + ONES[n % 10] if n % 10 else "")
+
+
+def plural(word: str) -> str:
+    """'fifty' -> 'fifties', 'hundred' -> 'hundreds'."""
+    return word[:-1] + "ies" if word.endswith("y") else word + "s"
+
+
+def year_to_words(year: int, decade: bool = False) -> str:
+    """1852 -> eighteen fifty-two, 1905 -> nineteen oh five, 2024 -> twenty twenty-four."""
+    hi, lo = divmod(year, 100)
+    if 2000 <= year < 2010:
+        words = "two thousand" + (" " + ONES[lo] if lo else "")
+    elif lo == 0:
+        words = two_digits(hi) + " hundred"
+    elif lo < 10:
+        words = two_digits(hi) + " oh " + ONES[lo]
+    else:
+        words = two_digits(hi) + " " + two_digits(lo)
+    if decade:
+        head, _, last = words.rpartition(" ")
+        words = (head + " " if head else "") + plural(last)
+    return words
+
+
+def speak_years(text: str) -> str:
+    """Rewrite years so Kokoro says 'eighteen fifty-two', not 'one thousand eight hundred...'."""
+    return YEAR_RE.sub(lambda m: year_to_words(int(m.group(1)), bool(m.group(2))), text)
 
 
 def list_voices():
@@ -38,6 +85,7 @@ def generate(text: str, voice: str, output: Path, speed: float = 1.0):
 
     print(f"Generating voiceover ({voice}, speed={speed})...")
     kokoro = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
+    text = speak_years(text)
     samples, sample_rate = kokoro.create(text, voice=voice, speed=speed, lang="en-us")
 
     output.parent.mkdir(parents=True, exist_ok=True)
