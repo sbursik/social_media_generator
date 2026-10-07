@@ -8,6 +8,7 @@ Config (environment or a .env file in the repo root):
     COMFY_API_KEY  Comfy.org API key, needed for API nodes (Gemini, MiniMax)
 """
 
+import hashlib
 import json
 import os
 import sys
@@ -90,10 +91,13 @@ def get_output_files(history: dict) -> list[Path]:
 
 def copy_image_to_input(src: Path) -> str:
     """Upload an image to ComfyUI's input folder and return its name there."""
-    with open(src, "rb") as f:
-        resp = requests.post(f"{COMFYUI_URL}/upload/image",
-                             files={"image": (src.name, f, "image/png")},
-                             data={"overwrite": "true"}, timeout=120)
+    # Prefix with a content hash so same-named files from different projects
+    # (e.g. two scene1.png uploaded in parallel) can't overwrite each other.
+    data = src.read_bytes()
+    name = f"{hashlib.sha1(data).hexdigest()[:12]}_{src.name}"
+    resp = requests.post(f"{COMFYUI_URL}/upload/image",
+                         files={"image": (name, data, "image/png")},
+                         data={"overwrite": "true"}, timeout=120)
     resp.raise_for_status()
     info = resp.json()
     return f"{info['subfolder']}/{info['name']}" if info.get("subfolder") else info["name"]
