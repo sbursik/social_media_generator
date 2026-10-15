@@ -12,7 +12,11 @@ Usage:
       --audio projects/my-video/voiceover_padded.wav \
       --file projects/my-video/narration.txt \
       --output projects/my-video/final_captioned.mp4 \
-      --title "Ketchup Was Fish Sauce"   # optional: title card on the opening frames
+      --title "Ketchup Was Fish Sauce" \
+      --hook "It wasn't even red"
+
+--title (optional) is a title card on the opening frames (the cover frame);
+--hook (optional) adds a smaller white teaser line under it.
 """
 
 import argparse
@@ -103,7 +107,7 @@ def ass_time(t: float) -> str:
 
 def build_ass(chunks: list[list[dict]], width: int, height: int, font_size: int,
               margin_v: int, highlight: str, title: str | None = None,
-              title_duration: float = 3.0) -> str:
+              title_duration: float = 3.0, hook: str | None = None) -> str:
     # ASS colours are &HAABBGGRR
     hl = f"&H00{highlight[4:6]}{highlight[2:4]}{highlight[0:2]}&".upper()
     header = f"""[Script Info]
@@ -125,6 +129,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     if title:
         # Visible from frame 0 so it's on the cover frame, then fades out
         txt = title.upper().replace("{", "(").replace("}", ")")
+        if hook:
+            # Same event so a wrapped title pushes the hook down instead of overlapping it
+            hook_txt = hook.upper().replace("{", "(").replace("}", ")")
+            txt += f"\\N{{\\fs{int(font_size * 0.8)}\\c&H00FFFFFF&}}{hook_txt}"
         lines.append(f"Dialogue: 1,{ass_time(0)},{ass_time(title_duration)},Title,,0,0,0,,{{\\fad(0,400)}}{txt}")
     for ci, chunk in enumerate(chunks):
         # Hold each line until the next one starts (no flicker between lines)
@@ -163,9 +171,12 @@ def main():
                         help="Distance from bottom as fraction of height (default: 0.30, clears TikTok UI)")
     parser.add_argument("--highlight", default="FFD60A", help="Active word colour, hex RGB (default: FFD60A yellow)")
     parser.add_argument("--title", help="Short title shown at the top of the opening frames (cover frame)")
+    parser.add_argument("--hook", help="Smaller white teaser line under the title (needs --title)")
     parser.add_argument("--title-duration", type=float, default=3.0, help="Seconds the title stays up (default: 3)")
     parser.add_argument("--model", default="small.en", help="faster-whisper model (default: small.en)")
     args = parser.parse_args()
+    if args.hook and not args.title:
+        parser.error("--hook needs --title")
 
     video, audio, output = Path(args.video), Path(args.audio), Path(args.output)
     width, height = video_size(video)
@@ -187,7 +198,7 @@ def main():
     ass_path = output.with_suffix(".ass")
     ass_path.write_text(build_ass(chunks, width, height, int(args.font_size * scale),
                                   int(height * args.position), args.highlight,
-                                  args.title, args.title_duration), encoding="utf-8")
+                                  args.title, args.title_duration, args.hook), encoding="utf-8")
     print(f"  {len(words)} words → {len(chunks)} caption lines ({ass_path.name})")
 
     print(f"Burning captions → {output.name}")

@@ -86,18 +86,19 @@ uv run tools/captions.py \
   --audio projects/my-video/voiceover_padded.wav \
   --file projects/my-video/narration.txt \
   --title "Ketchup Was Fish Sauce" \
+  --hook "It wasn't even red" \
   --output projects/my-video/final_captioned.mp4
 ```
 
 ## Workflow for `/video`
 
 1. Ask the user: concept, platform (tiktok/reels/shorts), approximate duration
-2. Write a scene-by-scene script to `projects/<slug>/SCRIPT.md`
+2. Write a scene-by-scene script to `projects/<slug>/SCRIPT.md`, starting with a Hooks section: title hook, hook line, opening line + open loop, payoff scene, and mid-video re-hook (see the social-video skill). Hooks must be true and paid off
 3. For each scene: generate image → animate to video clip
 4. Generate voiceover from the full narration script (pad 1s of silence at the start so the first word isn't clipped)
 5. Pick a background music track from `audio_samples/` (ask the user if unsure; can render one version per track to compare)
 6. Retime clips with `tools/sync_scenes.py` so visuals match narration, then assemble `synced/` clips into final.mp4 with `--music`
-7. Burn captions with `tools/captions.py --title "<short title>"` → final_captioned.mp4 (the title shows on the opening frames and the cover)
+7. Burn captions with `tools/captions.py --title "<title hook>" --hook "<teaser line>"` → final_captioned.mp4 (both show on the opening frames and the cover)
 8. Write `POST.txt` with captions, Shorts title/description, hashtags, and posting checklist (incl. AI-content label)
 9. Report the output path
 

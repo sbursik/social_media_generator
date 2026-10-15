@@ -44,12 +44,35 @@ Plan 1 scene per ~5 seconds of video. Each scene needs:
 - **Motion prompt** — camera movement + action for MiniMax H3
 - **Narration** — the spoken line(s) for this scene
 
+#### Hooks (every video)
+
+Viewers decide in the first 1–2 seconds whether to keep watching, so plan the hooks before the scenes:
+
+- **Title hook**: the on-screen title (2–6 words) makes a surprising claim or opens a curiosity gap. It shouldn't just name the topic. Patterns that work:
+  - Myth flip: "Pizza Wasn't Italian" / "Ketchup Was Fish Sauce"
+  - Unexpected origin: "The Chicago Hot Dog Was a Depression Meal"
+  - Direct stakes: "Your Job Is Next"
+  - Hidden truth: "AI Lies With a Straight Face"
+  Not "The History of Pizza" or "AI and Jobs".
+- **Hook line**: a short white teaser under the title (3–6 words) that adds a second open loop, e.g. "And it's never had ketchup", "It wasn't even red", "Watch till the end". It's burned in with `captions.py --hook`.
+- **Opening narration (scene 1, first ~3s)**: lead with the most surprising true claim. No greetings, no "Did you know", no setup. Then open a loop the video only closes near the end, e.g. "...and the reason why is stranger than you think." Write down the payoff scene in SCRIPT.md so it really gets paid off.
+- **Opening visual (scene 1)**: the most striking image in the video. Put the subject in close-up with motion from frame 0 (pour, sprinkle, crack, reveal). No slow establishing shots.
+- **Re-hook halfway through**: put a one-line turn around 40–50% of the runtime ("But that's not the strangest part.", "Then it all went wrong.") so viewers don't drop off mid-video.
+- **Honesty**: every hook must be true and paid off in the video. No fake stats, no promises the video doesn't keep (strict sourcing still applies). Clickbait that doesn't pay off kills retention and gets comments calling it out.
+
 Write `projects/<slug>/SCRIPT.md` with this structure:
 
 ```markdown
 # <Title>
 
 Platform: tiktok | Duration: ~30s | Tone: cinematic
+
+## Hooks
+- **Title:** <2–6 word on-screen title — surprising claim / curiosity gap>
+- **Hook line:** <3–6 word teaser under the title>
+- **Opening line:** <scene 1 narration — boldest true claim + open loop>
+- **Payoff:** <which scene closes the open loop>
+- **Re-hook:** <mid-video turn line, ~40–50% in>
 
 ## Narration (full script)
 <full voiceover text, all scenes combined>
@@ -135,19 +158,20 @@ uv run tools/captions.py \
   --audio projects/<slug>/voiceover_padded.wav \
   --file projects/<slug>/narration.txt \
   --title "Ketchup Was Fish Sauce" \
+  --hook "It wasn't even red" \
   --output projects/<slug>/final_captioned.mp4
 ```
 
 Options: `--words 3` (words per line), `--font-size 86`, `--position 0.30` (fraction from bottom), `--highlight FFD60A`, `--title-duration 3`.
 
-Always pass `--title` with a short title (2–5 words, usually the SCRIPT.md heading). It shows in yellow in the upper third from frame 0, so it's on the cover frame, then fades out after 3s.
+Always pass `--title` and `--hook` from the SCRIPT.md Hooks section. The title shows in yellow in the upper third from frame 0, so it's on the cover frame. The hook line sits under it in smaller white text. Both fade out after 3s (`--title-duration`).
 
 ### Step 8 — Social post copy
 
 Write `projects/<slug>/POST.txt` with ready-to-paste posting text (format: `templates/POST.example.txt`):
 
-- **TikTok / Reels caption** — hook line (usually the video's first line), 1–2 sentence teaser, a question to drive comments, then 6–8 hashtags incl. the channel tag
-- **YouTube Shorts** — title ≤100 chars ending in `#shorts`, short description with a follow CTA, comma-separated tags
+- **TikTok / Reels caption** — the first line is the hook (opening claim or title hook; it's the only part shown before "more"), then a 1–2 sentence teaser that hints at the payoff without giving it away, a question to drive comments, then 6–8 hashtags incl. the channel tag
+- **YouTube Shorts** — title ≤100 chars ending in `#shorts`. Front-load the hook in the first ~40 chars (that's what shows in the feed), e.g. "Ketchup Was Fish Sauce 🐟 (not tomato) #shorts", not "The History of Ketchup". Then a short description with a follow CTA and comma-separated tags
 - **Hashtag bank** — ~14 topic hashtags to rotate (3–6 per post)
 - **Posting checklist** — turn ON the platform's AI-generated content label (TikTok "AI-generated content", YouTube "Altered or synthetic content", Instagram "AI info"); suggested cover frame with timestamp; pinned-comment idea
 
