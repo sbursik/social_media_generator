@@ -73,12 +73,25 @@ def align_to_script(heard: list[dict], script: str) -> list[dict]:
             for k in range(j2 - j1):
                 timed[j1 + k] = {"start": start + k * step, "end": start + (k + 1) * step}
 
-    # Script words whisper missed entirely: squeeze between neighbours
-    for i, t in enumerate(timed):
-        if t is None:
-            prev_end = next((timed[p]["end"] for p in range(i - 1, -1, -1) if timed[p]), 0.0)
-            next_start = next((timed[n]["start"] for n in range(i + 1, len(timed)) if timed[n]), prev_end + 0.3)
-            timed[i] = {"start": prev_end, "end": max(next_start, prev_end + 0.05)}
+    # Runs of script words whisper missed entirely: spread evenly across the gap
+    i = 0
+    while i < len(timed):
+        if timed[i] is not None:
+            i += 1
+            continue
+        j = i
+        while j < len(timed) and timed[j] is None:
+            j += 1
+        # Whisper often stretches the word before a skipped span over the whole gap
+        if i > 0 and timed[i - 1]["end"] - timed[i - 1]["start"] > 1.0:
+            i -= 1
+            timed[i] = None
+        prev_end = timed[i - 1]["end"] if i > 0 else 0.0
+        next_start = timed[j]["start"] if j < len(timed) else prev_end + 0.3 * (j - i)
+        step = max(next_start - prev_end, 0.05 * (j - i)) / (j - i)
+        for k in range(i, j):
+            timed[k] = {"start": prev_end + (k - i) * step, "end": prev_end + (k - i + 1) * step}
+        i = j
 
     return [{"text": w, **t} for w, t in zip(script_words, timed)]
 
