@@ -66,6 +66,17 @@ def speak_years(text: str) -> str:
     return YEAR_RE.sub(lambda m: year_to_words(int(m.group(1)), bool(m.group(2))), text)
 
 
+# Words Kokoro mispronounces, respelled for speech only. Captions keep the script's spelling.
+PRONUNCIATIONS = {
+    "saltpeter": "salt peter",
+}
+PRONUNCIATION_RE = re.compile(r"\b(" + "|".join(PRONUNCIATIONS) + r")\b", re.IGNORECASE)
+
+
+def fix_pronunciations(text: str) -> str:
+    return PRONUNCIATION_RE.sub(lambda m: PRONUNCIATIONS[m.group(1).lower()], text)
+
+
 def list_voices():
     from kokoro_onnx import Kokoro
     k = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
@@ -85,7 +96,7 @@ def generate(text: str, voice: str, output: Path, speed: float = 1.0):
 
     print(f"Generating voiceover ({voice}, speed={speed})...")
     kokoro = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
-    text = speak_years(text)
+    text = fix_pronunciations(speak_years(text))
     samples, sample_rate = kokoro.create(text, voice=voice, speed=speed, lang="en-us")
 
     output.parent.mkdir(parents=True, exist_ok=True)
