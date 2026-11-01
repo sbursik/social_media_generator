@@ -1,0 +1,117 @@
+{
+  "93": {
+    "inputs": {
+      "image": ["135", 0],
+      "width": 756,
+      "height": 1344,
+      "x": 6,
+      "y": 0
+    },
+    "class_type": "ImageCrop",
+    "_meta": { "title": "Center Crop to Exact Ratio" }
+  },
+  "119": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": { "title": "Load VAE" }
+  },
+  "122": {
+    "inputs": {
+      "samples": ["125", 0],
+      "vae": ["119", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": { "title": "VAE Decode" }
+  },
+  "123": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": { "title": "KSamplerSelect" }
+  },
+  "124": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 20,
+      "denoise": 1,
+      "model": ["127", 0]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": { "title": "BasicScheduler" }
+  },
+  "125": {
+    "inputs": {
+      "noise": ["129", 0],
+      "guider": ["126", 0],
+      "sampler": ["123", 0],
+      "sigmas": ["124", 0],
+      "latent_image": ["131", 1]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": { "title": "SamplerCustomAdvanced" }
+  },
+  "126": {
+    "inputs": {
+      "model": ["127", 0],
+      "conditioning": ["131", 0]
+    },
+    "class_type": "BasicGuider",
+    "_meta": { "title": "Basic Guider" }
+  },
+  "127": {
+    "inputs": {
+      "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": { "title": "Load Diffusion Model" }
+  },
+  "128": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": { "title": "Load CLIP" }
+  },
+  "129": {
+    "inputs": {
+      "noise_seed": 1
+    },
+    "class_type": "RandomNoise",
+    "_meta": { "title": "RandomNoise" }
+  },
+  "131": {
+    "inputs": {
+      "prompt": "",
+      "width": 768,
+      "height": 1344,
+      "length": 8,
+      "clip": ["128", 0],
+      "vae": ["119", 0]
+    },
+    "class_type": "MiniMaxH3ImageToVideo",
+    "_meta": { "title": "MiniMax H3 (short clip, one frame kept)" }
+  },
+  "135": {
+    "inputs": {
+      "batch_index": 8,
+      "length": 1,
+      "image": ["122", 0]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": { "title": "Get Image from Batch" }
+  },
+  "145": {
+    "inputs": {
+      "images": ["93", 0],
+      "filename_prefix": "social_media_generator/image"
+    },
+    "class_type": "SaveImage",
+    "_meta": { "title": "Save Image" }
+  }
+}

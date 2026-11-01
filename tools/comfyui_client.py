@@ -10,6 +10,7 @@ Config (environment or a .env file in the repo root):
 
 import hashlib
 import json
+import math
 import os
 import sys
 import tempfile
@@ -24,6 +25,27 @@ WORKFLOWS_DIR = REPO_ROOT / "workflows"
 
 load_dotenv(REPO_ROOT / ".env")
 COMFYUI_URL = os.environ.get("COMFYUI_URL", "http://127.0.0.1:8188").rstrip("/")
+
+# H3's native canvas is capped at 768x1344; sizes must be multiples of 32
+H3_MAX_LONG_EDGE = 1344
+H3_MAX_SHORT_EDGE = 768
+
+
+def h3_size(aspect: float, megapixels: float) -> tuple[int, int, int, int]:
+    """Return (render_w, render_h, crop_w, crop_h) for a width/height aspect ratio.
+
+    Multiples of 32 rarely hit the ratio exactly (9:16 has no such size near 720x1280), and
+    assemble.py would pad the difference with black bars, so render large and center-crop.
+    """
+    width = math.sqrt(megapixels * 1_000_000 * aspect)
+    height = width / aspect
+    scale = min(1.0, H3_MAX_LONG_EDGE / max(width, height), H3_MAX_SHORT_EDGE / min(width, height))
+    render_w = math.ceil(width * scale / 32) * 32
+    render_h = math.ceil(height * scale / 32) * 32
+    # Even crop sizes, since H.264 needs them
+    if render_w / render_h > aspect:
+        return render_w, render_h, round(render_h * aspect / 2) * 2, render_h
+    return render_w, render_h, render_w, round(render_w / aspect / 2) * 2
 
 
 def load_workflow(path: str | Path) -> dict:

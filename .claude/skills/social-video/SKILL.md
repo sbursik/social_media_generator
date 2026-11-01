@@ -1,11 +1,11 @@
 ---
 name: social-video
-description: "Create short-form social media videos (TikTok, Reels, YouTube Shorts) using local ComfyUI for image and video generation, Kokoro TTS for voiceover, and FFmpeg for assembly. Run from the repo root."
+description: "Create short-form social media videos (TikTok, Reels, YouTube Shorts) using MiniMax H3 in local ComfyUI for image and video generation, Kokoro TTS for voiceover, and FFmpeg for assembly. Run from the repo root."
 ---
 
 # Social Video Skill
 
-Create a complete social media video from a concept: scenes are written, images generated via ComfyUI (Gemini Nano Banana 2), animated via ComfyUI (MiniMax H3 Max) — or both via the direct APIs when `.env` has `BACKEND=direct` (no ComfyUI, e.g. on Windows) — narrated with Kokoro TTS, and assembled with FFmpeg.
+Create a complete social media video from a concept: scenes are written, images generated and animated on the local GPU via ComfyUI (MiniMax H3) — or via the paid direct APIs when `.env` has `BACKEND=direct` (no ComfyUI, e.g. on Windows) — narrated with Kokoro TTS, and assembled with FFmpeg.
 
 ## How to invoke
 
@@ -40,7 +40,7 @@ Slug = lowercase hyphenated version of the concept (e.g. "mountain-sunset").
 ### Step 3 — Write script to SCRIPT.md
 
 Plan 1 scene per ~5 seconds of video. Each scene needs:
-- **Image prompt** — detailed visual description for Gemini (no text in image unless needed)
+- **Image prompt** — detailed visual description for the image model (no text in image unless needed)
 - **Motion prompt** — camera movement + action for MiniMax H3
 - **Narration** — the spoken line(s) for this scene
 
@@ -186,9 +186,10 @@ Tell the user:
 
 ## Error handling
 
-- If a ComfyUI node says "Please login first": `COMFY_API_KEY` is missing — add it to `.env` in the repo root (see README)
+- If a ComfyUI node says "Please login first": a cloud backend is selected and `COMFY_API_KEY` is missing. Use `local` unless the user wants cloud generation
 
-- With `BACKEND=direct`: a missing `GEMINI_API_KEY` / `MINIMAX_API_KEY` stops the tool with a clear error; only 768P video is available (`--upscale` for 2K)
+- With `BACKEND=direct` or `VIDEO_BACKEND=direct`: a missing `GEMINI_API_KEY` / `MINIMAX_API_KEY` stops the tool with a clear error; only 768P video is available (`--upscale` for 2K)
+- If local generation fails with a missing model: check the model files listed in the README. If the GPU machine is unreachable, `--backend comfyui` or `--backend direct` uses paid cloud generation; ask the user first
 - If ComfyUI can't be reached: check it's running at `COMFYUI_URL` (default http://127.0.0.1:8188)
 - If Kokoro fails with model not found: run the setup commands in CLAUDE.md
 - If a video clip looks wrong: re-run just that scene's comfyui_video.py with a different seed or refined motion prompt

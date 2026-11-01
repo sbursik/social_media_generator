@@ -1,13 +1,13 @@
 # Social Media Video Generator
 
-Local AI video production using ComfyUI (or the Gemini/MiniMax APIs directly — no ComfyUI needed, works on Windows). Creates short-form social media videos (TikTok, Reels, Shorts) from a concept.
+Local AI video production using MiniMax H3 in ComfyUI (or the paid Gemini/MiniMax APIs directly — no ComfyUI needed, works on Windows). Creates short-form social media videos (TikTok, Reels, Shorts) from a concept.
 
 ## Stack
 
 | Task | Tool | Backend |
 |---|---|---|
-| Text → Image | `tools/comfyui_image.py` | Gemini Nano Banana 2 via ComfyUI or direct API |
-| Image → Video | `tools/comfyui_video.py` | MiniMax H3 Max via ComfyUI or direct API |
+| Text → Image | `tools/comfyui_image.py` | MiniMax H3 on the local GPU via ComfyUI (default); Gemini Nano Banana 2 cloud via ComfyUI or direct API |
+| Image → Video | `tools/comfyui_video.py` | MiniMax H3 on the local GPU via ComfyUI (default); H3 Max cloud via ComfyUI or direct API |
 | Voiceover | `tools/voiceover.py` | Kokoro ONNX (local CPU) |
 | Assembly | `tools/assemble.py` | FFmpeg |
 | Scene sync | `tools/sync_scenes.py` | faster-whisper + FFmpeg |
@@ -15,9 +15,15 @@ Local AI video production using ComfyUI (or the Gemini/MiniMax APIs directly —
 
 ## Requirements
 
-- One image/video backend, chosen by `BACKEND` in `.env`:
-  - `comfyui` (default): ComfyUI running at `http://127.0.0.1:8188` (or set `COMFYUI_URL`) plus a Comfy.org API key with credits as `COMFY_API_KEY`
-  - `direct`: no ComfyUI; `GEMINI_API_KEY` (Google AI Studio) and `MINIMAX_API_KEY` (MiniMax platform), billed by those accounts. Video is 768P only (`--upscale` for 2K). Override per run with `--backend`
+- A video backend, chosen by `VIDEO_BACKEND` in `.env` (override per run with `--backend`):
+  - `local` (default): MiniMax H3 on the GPU through ComfyUI, with no key or credits. Model files are listed in the README. No `--upscale`, `--enhance` or `--resolution 1080P`
+  - `comfyui`: MiniMax H3 Max cloud node, using `COMFY_API_KEY` credits
+  - `direct`: MiniMax API with no ComfyUI, using `MINIMAX_API_KEY`. 768P only (`--upscale` for 2K). Also the default if `BACKEND=direct` and `VIDEO_BACKEND` is unset
+- An image backend, chosen by `IMAGE_BACKEND` in `.env` (override per run with `--backend`):
+  - `local` (default): MiniMax H3 pseudo-image workflow on the GPU through ComfyUI, with no key or credits. 1K only
+  - `comfyui`: Gemini cloud node, using `COMFY_API_KEY` credits
+  - `direct`: Gemini API with no ComfyUI, using `GEMINI_API_KEY`. Also the default if `BACKEND=direct` and `IMAGE_BACKEND` is unset
+- For `local` and `comfyui`: ComfyUI running at `http://127.0.0.1:8188` (or set `COMFYUI_URL`)
 - `uv sync` run from the repo root to install Python deps
 - Kokoro model files in the repo root (see Setup below)
 - FFmpeg installed (already present on Linux; on Windows: `winget install ffmpeg`)
@@ -26,7 +32,7 @@ Local AI video production using ComfyUI (or the Gemini/MiniMax APIs directly —
 
 ```bash
 uv sync
-cp .env.example .env   # then fill in COMFY_API_KEY
+cp .env.example .env   # then set COMFYUI_URL if ComfyUI isn't on the default port
 
 # Download Kokoro ONNX model files
 uv run python -c "
@@ -154,8 +160,8 @@ Music loops if shorter than the video, fades in over 1s and out over the last 2.
 
 - Always run tools from the repo root (not subdirectories)
 - ComfyUI workflows used by the tools live in `workflows/`; files move to/from ComfyUI over HTTP, so any install location works
-- With `BACKEND=comfyui`, ComfyUI must be running before calling image/video tools
-- MiniMax video generation can take 2–5 minutes per clip
+- ComfyUI must be running before calling the image or video tools, unless that backend is `direct`
+- Video generation can take 2–5 minutes per clip. Local images and clips render one at a time, so run them sequentially
 - Assembly trims to the audio length — pad the voiceover with silence (`ffmpeg -af "adelay=1000:all=1,apad=whole_dur=<video length>"`) so the last clip isn't cut
 - Kokoro generates ~150 words/minute at speed=1.0
 - `voiceover.py` speaks years naturally (1852 → "eighteen fifty-two", 1850s → "eighteen fifties"); keep digits in the script so captions show "1852". Write quantities with commas ("1,500") so they aren't read as years

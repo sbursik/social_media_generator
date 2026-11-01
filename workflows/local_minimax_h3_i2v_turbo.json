@@ -1,0 +1,158 @@
+{
+  "6": {
+    "inputs": {
+      "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": { "title": "Load Diffusion Model" }
+  },
+  "9": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 8,
+      "denoise": 1.0,
+      "model": ["123", 0]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": { "title": "Scheduler" }
+  },
+  "10": {
+    "inputs": {
+      "samples": ["14", 0],
+      "vae": ["11", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": { "title": "VAE Decode" }
+  },
+  "11": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": { "title": "Load Video VAE" }
+  },
+  "13": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": { "title": "Load Text Encoder" }
+  },
+  "14": {
+    "inputs": {
+      "noise": ["15", 0],
+      "guider": ["16", 0],
+      "sampler": ["17", 0],
+      "sigmas": ["9", 0],
+      "latent_image": ["104", 1]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": { "title": "Sampler" }
+  },
+  "15": {
+    "inputs": {
+      "noise_seed": 1
+    },
+    "class_type": "RandomNoise",
+    "_meta": { "title": "Noise" }
+  },
+  "16": {
+    "inputs": {
+      "model": ["123", 0],
+      "conditioning": ["104", 0]
+    },
+    "class_type": "BasicGuider",
+    "_meta": { "title": "Guider" }
+  },
+  "17": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": { "title": "Sampler Select" }
+  },
+  "91": {
+    "inputs": {
+      "images": ["93", 0],
+      "fps": 24,
+      "bit_depth": 8,
+      "color_space": "sRGB"
+    },
+    "class_type": "CreateVideo",
+    "_meta": { "title": "Create Video" }
+  },
+  "92": {
+    "inputs": {
+      "video": ["91", 0],
+      "filename_prefix": "video/social_media_generator",
+      "format": "auto",
+      "format.codec": "auto",
+      "codec": "auto"
+    },
+    "class_type": "SaveVideo",
+    "_meta": { "title": "Save Video" }
+  },
+  "93": {
+    "inputs": {
+      "image": ["10", 0],
+      "width": 720,
+      "height": 1280,
+      "x": 8,
+      "y": 0
+    },
+    "class_type": "ImageCrop",
+    "_meta": { "title": "Center Crop to Exact Ratio" }
+  },
+  "104": {
+    "inputs": {
+      "clip": ["13", 0],
+      "vae": ["11", 0],
+      "first_frame": ["115", 0],
+      "prompt": "",
+      "width": 704,
+      "height": 1280,
+      "length": 124
+    },
+    "class_type": "MiniMaxH3ImageToVideo",
+    "_meta": { "title": "MiniMax H3 Image to Video" }
+  },
+  "114": {
+    "inputs": {
+      "image": ""
+    },
+    "class_type": "LoadImage",
+    "_meta": { "title": "Load Image" }
+  },
+  "115": {
+    "inputs": {
+      "image": ["114", 0],
+      "upscale_method": "lanczos",
+      "width": 736,
+      "height": 1280,
+      "crop": "center"
+    },
+    "class_type": "ImageScale",
+    "_meta": { "title": "Fit First Frame (H3 would stretch it)" }
+  },
+  "122": {
+    "inputs": {
+      "model": ["6", 0],
+      "lora_name": "H3/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": { "title": "Turbo LoRA (8 step)" }
+  },
+  "123": {
+    "inputs": {
+      "model": ["122", 0],
+      "shift_video": 12.0,
+      "shift_audio": 3.0
+    },
+    "class_type": "MiniMaxH3SigmaShift",
+    "_meta": { "title": "Sigma Shift" }
+  }
+}
