@@ -24,6 +24,7 @@ import difflib
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 FONTS_DIR = Path(__file__).parent.parent / "fonts"
@@ -208,20 +209,23 @@ def main():
             w["start"] = w["end"] - 0.6
 
     chunks = chunk_words(words, args.words)
-    ass_path = output.with_suffix(".ass")
-    ass_path.write_text(build_ass(chunks, width, height, int(args.font_size * scale),
-                                  int(height * args.position), args.highlight,
-                                  args.title, args.title_duration, args.hook), encoding="utf-8")
-    print(f"  {len(words)} words → {len(chunks)} caption lines ({ass_path.name})")
+    print(f"  {len(words)} words → {len(chunks)} caption lines")
 
     print(f"Burning captions → {output.name}")
-    result = subprocess.run(
-        ["ffmpeg", "-y", "-i", str(video),
-         "-vf", f"ass={filter_path(ass_path)}:fontsdir={filter_path(FONTS_DIR)}",
-         "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-         "-c:a", "copy", str(output)],
-        capture_output=True, text=True,
-    )
+    # Keep the .ass away from the video: players like VLC auto-load a subtitle file
+    # with a similar name, which draws a second set of captions over the burned-in ones.
+    with tempfile.TemporaryDirectory() as tmp:
+        ass_path = Path(tmp) / "captions.ass"
+        ass_path.write_text(build_ass(chunks, width, height, int(args.font_size * scale),
+                                      int(height * args.position), args.highlight,
+                                      args.title, args.title_duration, args.hook), encoding="utf-8")
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(video),
+             "-vf", f"ass={filter_path(ass_path)}:fontsdir={filter_path(FONTS_DIR)}",
+             "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+             "-c:a", "copy", str(output)],
+            capture_output=True, text=True,
+        )
     if result.returncode != 0:
         sys.exit(f"ERROR: ffmpeg failed\n{result.stderr[-2000:]}")
     print(f"Done: {output}")
